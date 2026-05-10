@@ -2,106 +2,150 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>Practice Tracker</title>
     <style>
         :root {
-            --primary: #5856D6;
-            --bg: #F2F2F7;
-            --card: #FFFFFF;
+            --ios-blue: #007AFF;
+            --ios-bg: #F2F2F7;
+            --ios-card: #FFFFFF;
+            --ios-text: #000000;
+            --ios-gray: #8E8E93;
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--ios-bg);
             margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
             padding: 20px;
+            padding-top: 60px; /* Space for iOS status bar */
+            color: var(--ios-text);
         }
-        .container {
-            width: 100%;
-            max-width: 400px;
-        }
-        .stats-card {
-            background: var(--primary);
-            color: white;
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 10px 20px rgba(88, 86, 214, 0.3);
+        h1 { font-size: 34px; font-weight: 700; margin-bottom: 20px; }
+        
+        .goal-card {
+            background: var(--ios-card);
+            border-radius: 15px;
+            padding: 20px;
             margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-        .stats-card h1 { margin: 0; font-size: 3rem; }
-        .input-group {
-            background: var(--card);
-            padding: 20px;
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
+        .goal-header { display: flex; justify-content: space-between; align-items: center; }
+        .goal-title { font-size: 20px; font-weight: 600; margin: 0; }
+        .goal-total { font-size: 24px; font-weight: 700; color: var(--ios-blue); margin: 10px 0; }
+        
+        .input-row { display: flex; gap: 10px; margin-top: 15px; }
         input {
-            padding: 15px;
-            border: 1px solid #DDD;
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #E5E5EA;
             border-radius: 10px;
-            font-size: 1rem;
+            font-size: 16px;
+            background: #F9F9F9;
         }
         button {
-            background: var(--primary);
+            background: var(--ios-blue);
             color: white;
             border: none;
-            padding: 15px;
+            padding: 10px 20px;
             border-radius: 10px;
-            font-size: 1rem;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 15px;
         }
-        button:active { transform: scale(0.98); }
+        button:active { opacity: 0.7; }
+
+        .history-section { margin-top: 30px; }
+        .history-item {
+            background: var(--ios-card);
+            padding: 12px 15px;
+            border-bottom: 1px solid #E5E5EA;
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+        }
+        .history-item:first-child { border-radius: 10px 10px 0 0; }
+        .history-item:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
+        .label-gray { color: var(--ios-gray); }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="stats-card">
-        <p>Total Practice Time</p>
-        <h1 id="totalHours">0</h1>
-        <p>Hours</p>
+    <h1>My Goals</h1>
+
+    <div class="goal-card">
+        <div class="goal-header">
+            <p class="goal-title">🏃‍♂️ Running</p>
+        </div>
+        <div class="goal-total"><span id="total-running">0</span> hrs</div>
+        <div class="input-row">
+            <input type="number" id="input-running" placeholder="Hours" step="0.5">
+            <button onclick="addEntry('running')">Add</button>
+        </div>
     </div>
 
-    <div class="input-group">
-        <input type="number" id="hoursInput" placeholder="Enter hours (e.g. 1.5)" step="0.1">
-        <button onclick="addHours()">Add to Tally</button>
-        <button onclick="resetTally()" style="background: #FF3B30; margin-top: 10px; font-size: 0.8rem;">Reset</button>
+    <div class="goal-card">
+        <div class="goal-header">
+            <p class="goal-title">🤖 AI Knowledge</p>
+        </div>
+        <div class="goal-total"><span id="total-ai">0</span> hrs</div>
+        <div class="input-row">
+            <input type="number" id="input-ai" placeholder="Hours" step="0.5">
+            <button onclick="addEntry('ai')">Add</button>
+        </div>
     </div>
-</div>
 
-<script>
-    // Load existing data from LocalStorage
-    let total = parseFloat(localStorage.getItem('practiceTotal')) || 0;
-    document.getElementById('totalHours').innerText = total.toFixed(1);
+    <div class="history-section">
+        <h2 style="font-size: 20px;">History</h2>
+        <div id="history-list">
+            </div>
+    </div>
 
-    function addHours() {
-        const input = document.getElementById('hoursInput');
-        const val = parseFloat(input.value);
-        
-        if (!isNaN(val) && val > 0) {
-            total += val;
-            localStorage.setItem('practiceTotal', total);
-            document.getElementById('totalHours').innerText = total.toFixed(1);
-            input.value = '';
+    <script>
+        // State management
+        let data = JSON.parse(localStorage.getItem('myTrackerData')) || {
+            running: 0,
+            ai: 0,
+            history: []
+        };
+
+        function updateDisplay() {
+            document.getElementById('total-running').innerText = data.running.toFixed(1);
+            document.getElementById('total-ai').innerText = data.ai.toFixed(1);
+            
+            const historyDiv = document.getElementById('history-list');
+            historyDiv.innerHTML = data.history.slice(-5).reverse().map(item => `
+                <div class="history-item">
+                    <span><strong>${item.goal}</strong>: ${item.amount}h</span>
+                    <span class="label-gray">${item.date}</span>
+                </div>
+            `).join('');
         }
-    }
 
-    function resetTally() {
-        if(confirm("Are you sure you want to clear your progress?")) {
-            total = 0;
-            localStorage.setItem('practiceTotal', 0);
-            document.getElementById('totalHours').innerText = '0';
+        function addEntry(goalKey) {
+            const input = document.getElementById(`input-${goalKey}`);
+            const val = parseFloat(input.value);
+            
+            if (!isNaN(val) && val > 0) {
+                data[goalKey] += val;
+                
+                // Add to history
+                const now = new Date();
+                const dateString = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                data.history.push({
+                    goal: goalKey === 'running' ? 'Running' : 'AI Knowledge',
+                    amount: val,
+                    date: dateString
+                });
+
+                localStorage.setItem('myTrackerData', JSON.stringify(data));
+                input.value = '';
+                updateDisplay();
+            }
         }
-    }
-</script>
 
+        updateDisplay();
+    </script>
 </body>
 </html>
