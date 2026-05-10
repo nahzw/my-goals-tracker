@@ -4,148 +4,84 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <title>Practice Tracker</title>
+    <title>Goal Tracker</title>
     <style>
-        :root {
-            --ios-blue: #007AFF;
-            --ios-bg: #F2F2F7;
-            --ios-card: #FFFFFF;
-            --ios-text: #000000;
-            --ios-gray: #8E8E93;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-            background-color: var(--ios-bg);
-            margin: 0;
-            padding: 20px;
-            padding-top: 60px; /* Space for iOS status bar */
-            color: var(--ios-text);
-        }
-        h1 { font-size: 34px; font-weight: 700; margin-bottom: 20px; }
+        :root { --blue: #007AFF; --bg: #F2F2F7; --card: #FFF; --gray: #8E8E93; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); margin: 0; padding: env(safe-area-inset-top) 20px 20px; }
+        .page { display: none; }
+        .active { display: block; }
         
-        .goal-card {
-            background: var(--ios-card);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .goal-header { display: flex; justify-content: space-between; align-items: center; }
-        .goal-title { font-size: 20px; font-weight: 600; margin: 0; }
-        .goal-total { font-size: 24px; font-weight: 700; color: var(--ios-blue); margin: 10px 0; }
+        /* Home Page Styles */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h1 { font-size: 34px; margin: 0; }
+        .add-btn { font-size: 30px; color: var(--blue); cursor: pointer; text-decoration: none; }
         
-        .input-row { display: flex; gap: 10px; margin-top: 15px; }
-        input {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid #E5E5EA;
-            border-radius: 10px;
-            font-size: 16px;
-            background: #F9F9F9;
-        }
-        button {
-            background: var(--ios-blue);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 15px;
-        }
-        button:active { opacity: 0.7; }
+        .goal-card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 15px; cursor: pointer; }
+        .goal-info { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: 600; }
+        .progress-bar { height: 8px; background: #E5E5EA; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--blue); width: 0%; transition: width 0.3s; }
 
-        .history-section { margin-top: 30px; }
-        .history-item {
-            background: var(--ios-card);
-            padding: 12px 15px;
-            border-bottom: 1px solid #E5E5EA;
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-        }
-        .history-item:first-child { border-radius: 10px 10px 0 0; }
-        .history-item:last-child { border-radius: 0 0 10px 10px; border-bottom: none; }
-        .label-gray { color: var(--ios-gray); }
+        /* Detail Page Styles */
+        .back-btn { color: var(--blue); cursor: pointer; display: inline-block; margin-bottom: 20px; font-weight: 500; }
+        .stat-box { background: var(--card); border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 20px; }
+        .history-list { background: var(--card); border-radius: 12px; list-style: none; padding: 0; margin: 0; }
+        .history-item { padding: 12px 16px; border-bottom: 1px solid #E5E5EA; display: flex; justify-content: space-between; }
+        .history-item:last-child { border-bottom: none; }
+        
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #DDD; border-radius: 8px; box-sizing: border-box; }
+        .action-btn { background: var(--blue); color: white; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h1>My Goals</h1>
-
-    <div class="goal-card">
-        <div class="goal-header">
-            <p class="goal-title">🏃‍♂️ Running</p>
+    <div id="home-page" class="page active">
+        <div class="header">
+            <h1>Goals</h1>
+            <div class="add-btn" onclick="showAddGoal()">+</div>
         </div>
-        <div class="goal-total"><span id="total-running">0</span> hrs</div>
-        <div class="input-row">
-            <input type="number" id="input-running" placeholder="Hours" step="0.5">
-            <button onclick="addEntry('running')">Add</button>
-        </div>
+        <div id="goal-list"></div>
     </div>
 
-    <div class="goal-card">
-        <div class="goal-header">
-            <p class="goal-title">🤖 AI Knowledge</p>
+    <div id="detail-page" class="page">
+        <div class="back-btn" onclick="showHome()">← Back</div>
+        <h1 id="detail-title">Goal Name</h1>
+        <div class="stat-box">
+            <div style="font-size: 14px; color: var(--gray);">Progress</div>
+            <div style="font-size: 32px; font-weight: bold;" id="detail-progress">0 / 100 hrs</div>
         </div>
-        <div class="goal-total"><span id="total-ai">0</span> hrs</div>
-        <div class="input-row">
-            <input type="number" id="input-ai" placeholder="Hours" step="0.5">
-            <button onclick="addEntry('ai')">Add</button>
-        </div>
-    </div>
+        
+        <input type="number" id="add-hours-input" placeholder="Add hours (e.g. 2)">
+        <button class="action-btn" onclick="addHours()">Log Practice</button>
 
-    <div class="history-section">
-        <h2 style="font-size: 20px;">History</h2>
-        <div id="history-list">
-            </div>
+        <h3 style="margin-top: 30px;">History</h3>
+        <div id="detail-history" class="history-list"></div>
+        <button onclick="deleteGoal()" style="background:none; color:red; border:none; margin-top:40px; width:100%; text-align:center;">Delete Goal</button>
     </div>
 
     <script>
-        // State management
-        let data = JSON.parse(localStorage.getItem('myTrackerData')) || {
-            running: 0,
-            ai: 0,
-            history: []
-        };
+        let goals = JSON.parse(localStorage.getItem('myAppGoals')) || [];
+        let currentGoalIndex = null;
 
-        function updateDisplay() {
-            document.getElementById('total-running').innerText = data.running.toFixed(1);
-            document.getElementById('total-ai').innerText = data.ai.toFixed(1);
+        function showHome() {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('home-page').classList.add('active');
+            renderGoals();
+        }
+
+        function showDetail(index) {
+            currentGoalIndex = index;
+            const goal = goals[index];
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('detail-page').classList.add('active');
             
-            const historyDiv = document.getElementById('history-list');
-            historyDiv.innerHTML = data.history.slice(-5).reverse().map(item => `
+            document.getElementById('detail-title').innerText = goal.name;
+            document.getElementById('detail-progress').innerText = `${goal.current} / ${goal.target} hrs`;
+            
+            const historyHtml = goal.history.map(h => `
                 <div class="history-item">
-                    <span><strong>${item.goal}</strong>: ${item.amount}h</span>
-                    <span class="label-gray">${item.date}</span>
+                    <span>${h.amount} hrs</span>
+                    <span style="color:var(--gray)">${h.date}</span>
                 </div>
-            `).join('');
+            `).reverse().join('');
+            document.getElementById('detail-history').innerHTML = historyHtml || '<div style="padding:16px; color:var(--gray)">No entries yet</div>';
         }
-
-        function addEntry(goalKey) {
-            const input = document.getElementById(`input-${goalKey}`);
-            const val = parseFloat(input.value);
-            
-            if (!isNaN(val) && val > 0) {
-                data[goalKey] += val;
-                
-                // Add to history
-                const now = new Date();
-                const dateString = now.toLocaleDateString() + ' ' + now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                
-                data.history.push({
-                    goal: goalKey === 'running' ? 'Running' : 'AI Knowledge',
-                    amount: val,
-                    date: dateString
-                });
-
-                localStorage.setItem('myTrackerData', JSON.stringify(data));
-                input.value = '';
-                updateDisplay();
-            }
-        }
-
-        updateDisplay();
-    </script>
-</body>
-</html>
